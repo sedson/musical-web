@@ -93,10 +93,10 @@ function player (audioSrc, color, x, y) {
 }
 
 
-player('/source/bell_march11.mp3', 'pink', 0, 50);
-player('/source/green_central_knoll_march7.mp3', 'darkolivegreen', 0, 0);
-player('/source/guitar_loop_march8.mp3', 'cornsilk', 0, -50);
-player('/source/marble_tower_march12.mp3', 'lavender', 0, -100);
+player('/audio/bell_march11.mp3', 'pink', 0, 50);
+player('/audio/green_central_knoll_march7.mp3', 'darkolivegreen', 0, 0);
+player('/audio/guitar_loop_march8.mp3', 'cornsilk', 0, -50);
+player('/audio/marble_tower_march12.mp3', 'lavender', 0, -100);
 
 
 

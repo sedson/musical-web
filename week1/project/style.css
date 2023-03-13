@@ -14,12 +14,10 @@ body {
   background-size: cover;
   font-family: sans-serif;
   background-color: aliceblue;
-/*  overflow: hidden;*/
 }
 
 .axis {
   position: absolute;
-/*  background-color: black;*/
   border-bottom: 1px dotted black;
   height: 1px;
   position: absolute;

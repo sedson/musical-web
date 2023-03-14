@@ -84,7 +84,10 @@ function player (audioSrc, color, x, y) {
 
 
   draggable(container, (x, y) => {
-    track.setSpeed((1 - y) * 2);
+    // Remap y from 0 to 1 (bottom to top) from -3 to +3 to and use p
+    let y2 = Math.pow(2, (3 * ((1 - y) * 2 - 1)));
+    console.log(y2);
+    track.setSpeed(y2);
     track.setPan((x * 2) - 1);
   });
 

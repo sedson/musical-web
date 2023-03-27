@@ -6,7 +6,7 @@ function player (audioSrc, color, x, y) {
   const fileName = audioSrc.split('/').pop();
   
   // Make a track with a panner and a gain node.
-  const track = audio.addBufferFromSource(audioSrc, { pan: true, gain: true });
+  const track = audio.createTrack(audioSrc);
 
 
   // Make all the elements needed.
@@ -55,7 +55,7 @@ function player (audioSrc, color, x, y) {
 
   button.onclick = () => {
     if (button.dataset.state === 'playing') {
-      track.pause();
+      track.stop();
       button.dataset.state = 'paused';
       container.classList.remove('playing');
     } else { 
@@ -87,8 +87,8 @@ function player (audioSrc, color, x, y) {
     // Remap y from 0 to 1 (bottom to top) from -3 to +3 to and use p
     let y2 = Math.pow(2, (3 * ((1 - y) * 2 - 1)));
     console.log(y2);
-    track.setSpeed(y2);
-    track.setPan((x * 2) - 1);
+    track.speed = y2;
+    track.pan = (x * 2) - 1;
   });
 
   return container;

@@ -100,7 +100,7 @@ body {
   background-color: #2226;
 }
 .playing .player-button {
-  background-image: url(stop.svg);
+  background-image: url(pause.svg);
 }
 
 .filename {

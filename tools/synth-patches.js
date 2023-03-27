@@ -67,7 +67,7 @@ class Patch {
     this.onCurve = new Float32Array([0, 0.25, 1]);
     this.offCurve = new Float32Array([1, 0.75, 0]);
 
-    this.exposeParam('gain', this.mixer.gain, 0, 1, 1, 0.1);
+    this.exposeParam('gain', this.mixer.gain, 0, 1, 0.5, 0.1);
     this.exposeParam('pan', this.mixer.pan, -1, 1, 0,  0.1);
     this.exposeParam('freq', this.carrier.frequency, 1, 20000, 440, 0.001);
   }
@@ -190,23 +190,34 @@ class FmPatch extends Patch {
     this.modulator = new Wave(ctx, shape2);
     this.modulator.connect(this.carrier.frequency);
 
-    this.filter = new BiquadFilterNode(ctx);
-    this.dist = new WaveShaperNode(ctx);
-    this.filter.type = 'lowpass';
-
     this.carrier.disconnect();
-    this.carrier.connect(this.dist);
-    this.dist.connect(this.filter);
-    this.filter.connect(this.mixer.in);
 
+
+    this.filter = new BiquadFilterNode(ctx);
+    this.filter.type = 'lowpass';
+    
+    this.dist = new WaveShaperNode(ctx);
     this.dist.curve = new Float32Array([0, 0.1, 1]);
     this.dist.oversample = '4x';
 
+    this.echo = new ConvolverNode(ctx, { buffer: IR(ctx, 3, 3) });
+    this.echoAmount = new GainNode(ctx);
+    this.echo.connect(this.echoAmount);
+
+
+    this.carrier.connect(this.echo);
+    // this.echo.connect(this.dist);
+    this.echoAmount.connect(this.filter);
+    this.carrier.connect(this.filter);
+    this.filter.connect(this.mixer.in);
+
+
     this.exposeFn('harmonicity', '_harmonicity', 0.1, 100, 1, 0.1);
     this.exposeParam('modIndex', this.modulator.gain, 0.1, 3000, 1, 0.1);
-    this.exposeFn('freq', '_freq', 1, 20000, 440, 0.01);
+    this.exposeFn('freq', '_freq', 1, 20000, 440, 0.001);
     this.exposeParam('detune', this.carrier.detune, -100, 100, 0, 0.001);
     this.exposeParam('filter', this.filter.frequency, 1, 20000, 10000, 0.1);
+    this.exposeParam('verb', this.echoAmount.gain, 0, 2, 0.1, 0.1);
   }
 
   /** 
@@ -224,7 +235,7 @@ class FmPatch extends Patch {
   _freq (value, smoothing) {
     const modFreq = value * this.params['harmonicity']?.value;
     this.carrier.frequency.setTargetAtTime(value, 0, smoothing);
-    this.modulator.frequency.setTargetAtTime(modFreq, 0, smoothing * 5);
+    this.modulator.frequency.setTargetAtTime(modFreq, 0, smoothing * 20);
   }
 }
 
@@ -279,4 +290,15 @@ class Envelope {
       this.next = t + 100;
     }
   }
+}
+
+
+function IR (ctx, duration, decay) {
+  const length = ctx.sampleRate * duration;
+  const buff = ctx.createBuffer(1, length, ctx.sampleRate);
+  const chan0 = buff.getChannelData(0);
+  for (var i = 0; i < length; i++) {
+    chan0[i] = (2 * Math.random() - 1) * Math.pow(1 - i/length, decay);
+  }
+  return buff;
 }

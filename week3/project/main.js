@@ -190,6 +190,7 @@ const a = synth(FmPatch, {
   hold: 0.01,
   delay: 0.25 * 1000,
   offset: 0,
+  color: 'pink',
 });
 
 const b = synth(FmPatch, {
@@ -200,8 +201,19 @@ const b = synth(FmPatch, {
   delay: 0.25 * 1000,
   offset: 0,
   offset: -24,
+  color: 'darkseagreen',
+
 });
 
+const c = synth(FmPatch, {
+  shape1: 'triangle', 
+  shape2: 'sawtooth',
+  adsr: [0.005, 0.01, 0.3, 0.01],
+  hold: 0.01,
+  delay: 0.05 * 1000,
+  offset: 24,
+
+});
 
 
 

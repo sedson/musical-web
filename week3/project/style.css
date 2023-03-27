@@ -164,7 +164,7 @@ input[type="range"]::-moz-range-thumb {
   width: 15px;
   margin-right: 1px;
   border-radius: 15px;
-  background-color: #fafafa;
+  background-color: #fffa;
   cursor: pointer;
   text-align: center;
   font-size: 0.8rem;

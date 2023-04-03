@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="/style.css">
+  <link rel="stylesheet" type="text/css" href="./style.css">
+  <title>Week 4</title>
+</head>
+<body>
+  <p><span class="bg-blue">Experiment 4</span> A plain text format for composing and arranging patterns. </p>
+  <div class="full-width flex" id="main"></div>
+  <script type="text/javascript" src="/tools/dom-utils.js"></script>
+  <script type="text/javascript" src="/tools/webaudio-toolkit.js"></script>
+  <script type="text/javascript" src="/tools/a-math.js"></script>
+  <script type="text/javascript" src="/tools/synth-patches.js"></script>
+  <script type="text/javascript" src="/tools/notes.js"></script>
+  <script type="text/javascript" src="./parse.js"></script>
+  <script type="text/javascript" src="./parse-score.js"></script>
+
+  <script type="text/javascript" src="./main.js"></script>
+
+  <p><span class="bg-blue">format</span></p>
+  <p><em>notes</em> defines the available midi notes </p>
+  <p class="ex"><span class="example">notes 60 72</span> make a scale with middle c and the c above</p>
+
+  <p><em>clock</em> sets the time (in seconds) for each pattern </p>
+  <p class="ex"><span class="example">clock 1</span> each pattern uses 1 second </p>
+
+  <p><em>[a-z]</em> define a pattern </p>
+  <p class="ex"><span class="example">a 0 1</span> define a pattern (with the name 'a') that is the first and second note in the scale </p>
+
+  <p><em>|</em> create a track</p>
+  <p class="ex"><span class="example">| a a . a</span> play pattern a twice, rest, then play pattern a again </p>
+
+  <p><em>.</em> rest: rest for the length of a note (is in a pattern) or a pattern (if in a track)</p>
+
+  <p><em>-</em> sustain: hold the previous note in a pattern</p>
+
+  <p><em>*</em> wildcard: play a random note (if in a pattern) or a random (pattern) if in a track</p>
+
+  <p><em>@</em> loop : loop a pattern multiple times</p>
+
+</body>
+</html>

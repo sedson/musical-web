@@ -127,14 +127,12 @@ function synth (constructor, settings) {
   });
 
   const retrigger = (delay) => {
-    console.log('retrigger', delay);
     let randomNote = noteData.random();
-    console.log({randomNote})
 
     if (randomNote) {
       let randomOctave = 12 * (Math.floor(Math.random() * 3) - 1);
       let freq = mtof(parseInt(randomNote) + randomOctave + settings.offset);
-      patch.param('freq', freq);
+      patch.param('freq', freq, 1);
       trigger.attack(settings.hold);
     }
 
@@ -179,21 +177,32 @@ function synth (constructor, settings) {
 
 
 
+// const t = synth(FmPatch2, {
+//   shape: 'sawtooth',
+//   shape2: 'sawtooth',
+
+//   color: 'mintcream',
+//   adsr: [0.05, 0.01, 0.8, 0.1],
+//   hold: 0.001,
+//   offset: 0,
+//   delay: 0.1 * 1000,
+// })
+
 
 
 
 
 const a = synth(FmPatch, {
-  shape1: 'sine', 
+  shape: 'sine', 
   shape2: 'sine',
-  adsr: [0.05, 0.05, 0.1, 0.1],
-  hold: 0.01,
-  delay: 0.25 * 1000,
+  adsr: [0.5, 0.05, 0.1, 2],
+  hold: 2,
+  delay: 1 * 1000,
   offset: 0,
   color: 'pink',
 });
 
-const b = synth(FmPatch, {
+const b = synth(FmPatch2, {
   shape1: 'square', 
   shape2: 'sawtooth',
   adsr: [0.1, 0.01, 0.8, 2],
@@ -207,11 +216,11 @@ const b = synth(FmPatch, {
 
 const c = synth(FmPatch, {
   shape1: 'triangle', 
-  shape2: 'sawtooth',
-  adsr: [0.005, 0.01, 0.3, 0.01],
-  hold: 0.01,
-  delay: 0.05 * 1000,
-  offset: 24,
+  shape2: 'triangle',
+  adsr: [0.05, 0.1, 0.4, 0.2],
+  hold: 0.1,
+  delay: 0.1 * 1000,
+  offset: 12,
 
 });
 

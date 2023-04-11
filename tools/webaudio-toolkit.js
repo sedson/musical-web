@@ -2,6 +2,10 @@
  * @file Tools for web audio. Building as I go.
  */
 
+
+/**
+ * Make an audio context.
+ */ 
 function createCtx () {
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   if (!AudioContext) {
@@ -12,6 +16,9 @@ function createCtx () {
 }
 
 
+/**
+ * Make an audio context.
+ */ 
 class AudioTrack {
   
   constructor (path, ctx, options = {}) {
@@ -85,6 +92,7 @@ class AudioTrack {
     this.source = this.ctx.createBufferSource();
     this.source.buffer = this.buffer;
     this.source.playbackRate.value = this._speed;
+    this.source.loop = this.loop;
 
     let lastNode = this.source;
     for (effectNode of this.effectChain) {

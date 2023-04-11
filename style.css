@@ -76,3 +76,10 @@ p + li {
 li + p {
   margin-top: 1em;
 }
+.synthkit {
+  background-color: #222;
+  color: silver;
+}
+.synthkit a {
+  color: pink;
+}

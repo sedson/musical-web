@@ -1,4 +1,16 @@
-
+/**
+ * Create a DOM element from a object full of options. The keys in the object 
+ * should be the camel-cased JS versions ot HTML properties.
+ * @param {object} info The info to make the elemnent with.
+ * @example 
+ * // Create a p tag with the id 'banner', the className 'my-paragraph' etc.
+ * create({
+ *   tag: 'p',
+ *   className: 'my-paragraph',
+ *   id: 'banner',
+ *   innerText: 'What's Up!'
+ * });
+ */ 
 function create (info) {
   
   const tag = info.tag || 'div';
@@ -19,7 +31,17 @@ function create (info) {
 }
 
 
-
+/**
+ * Make an element draggable. 
+ * @param {HTMLElement} elem The element
+ * @param {function(x, y)} ondrag A function to call when the element is dragged. 
+ *     The function will be called whenever the element is dragged and can accept 
+ *     an X, Y position which will be the normalized location of the element 
+ *     within the window.
+ * 
+ * @example
+ * 
+ */ 
 function draggable (elem, ondrag = (x, y) => {}) {
   let x = 0, y = 0;
   let rect;
@@ -58,6 +80,4 @@ function draggable (elem, ondrag = (x, y) => {}) {
     document.onmousemove = mousemove;
     document.onmouseup = mouseup;
   };
-
-
 }

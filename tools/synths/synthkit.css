@@ -1,0 +1,28 @@
+* {
+  box-sizing: border-box;
+}
+@font-face {
+  font-family: IBM Plex Mono;
+  src: url(/fonts/IBMPlexMono-ExtraLight.ttf) format('truetype');
+}
+header {
+  margin-bottom: 1em;
+}
+body {
+  background: #333;
+  color: silver;
+  font-family: IBM Plex Mono, monospace;
+}
+.clickable {
+  color: white;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-bottom: 1em;
+}
+.analyser {
+  transform-origin: top left;
+  transform: scale(50%);
+}
+a {
+  color: silver;
+}

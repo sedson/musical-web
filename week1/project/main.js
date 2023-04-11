@@ -75,7 +75,7 @@ function player (audioSrc, color, x, y) {
 
   slider.oninput = (e) => {
     let val = parseFloat(slider.value) / 60;
-    track.setGain(val);
+    track.gain = val;
   }
 
   flexRow.append(button, slider, fileLabel);
@@ -94,6 +94,9 @@ function player (audioSrc, color, x, y) {
   return container;
 
 }
+
+
+
 
 
 player('/audio/bell_march11.mp3', 'pink', 0, 50);

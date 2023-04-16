@@ -7,7 +7,7 @@
 export class Operator {
   
   /**
-   * Construct an Audio Element.
+   * Construct an Operator.
    */ 
   constructor (ctx) {
     /** 
@@ -24,13 +24,13 @@ export class Operator {
   }
 
   /** 
-   * The final node in this AudioElement's sub-graph.
+   * The first node in this Operators's sub-graph.
    * @type {AudioNode}
    */ 
   get inlet () { return null; }
 
   /**
-   * The entrance node to this AudioElement's 
+   * The final node in this Operators's sub-graph.
    */ 
   get outlet () { return null; }
 
@@ -56,6 +56,30 @@ export class Operator {
    */ 
   nParam (name, value, time) {
     this._setParam(name, value, true, time);
+    return this;
+  }
+
+
+  /**
+   * Set a named parameter from a normalized value that uses exponential scaling.
+   * @param {string} name The name of the param
+   * @param {number} value The value to set.
+   * @param {number} time The amount of time to tween the change over. 
+   */ 
+  expNParam (name, value, time) {
+    this._setParam(name, value * value, true, time);
+  }
+
+
+  /**
+   * If the specific operator implementation has a scale node configured, set 
+   * its gain so some value.
+   * @param {number} value The value.
+   */ 
+  scale (value) {
+    if (this._scaler && this._scaler.gain) {
+      this._scaler.gain.value = value;
+    }
     return this;
   }
 

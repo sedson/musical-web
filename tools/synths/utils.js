@@ -138,3 +138,7 @@ export class StereoSplitter extends Operator {
   get R () { return this._outR; }
   get outlet () { return this._input; }
 }
+
+export function gain (ctx, gain = 1) {
+  return new GainNode(ctx, { gain : gain });
+}

@@ -18,6 +18,8 @@ export class Oscillator extends Operator {
   constructor (ctx, shape = 'sine', options = {}) {
     super(ctx);
 
+    this.shape = shape;
+
     /**
      * The oscillator.
      */ 
@@ -30,10 +32,20 @@ export class Oscillator extends Operator {
      * The gain.
      */ 
     this._gain = new GainNode(ctx);
+    this._scaler = this._gain;
 
     // Connect and start.
     this._oscillator.connect(this._gain);
     this._oscillator.start(this.ctx.currentTime);
+  }
+
+  sync () {
+    this._oscillator.stop();
+    this._oscillator.disconnect();
+    this._oscillator = new OscillatorNode(this.ctx, { type: this.shape });
+    this._oscillator.start(this.ctx.currentTime);
+    this._oscillator.connect(this._gain);
+    return this;
   }
 
   get frequency () { return this._oscillator.frequency; }

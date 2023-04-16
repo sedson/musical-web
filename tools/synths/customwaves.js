@@ -30,15 +30,23 @@ strt.onclick = () => {
 document.body.append(strt);
 
 
-const oscL = new Oscillator(ctx, 'sine', {freq: 100 });
+// const oscL = new Oscillator(ctx, 'sine', {freq: 100 });
 
 const fn = n => 
-  n > 0 && ( n - 1 ) % 4 === 0
+  n > 0 && ( n - 1 ) % 2 === 0
     // ? 1 / Math.pow(n, 1.2)
-    ? Math.random() / Math.pow(n, 1)
+    ? 1 / Math.pow(n, 1)
     : 0;
 
-const oscR = new CustomOscillator(ctx, fn, n => 0, { freq: 100.1, terms: 1024 })
+const fn2 = n => 
+  n > 0 && ( n - 1 ) % 2 === 0
+    // ? 1 / Math.pow(n, 1.2)
+    ? 1 / Math.pow(n, 1.5)
+    : 0;
+
+const oscR = new CustomOscillator(ctx, fn, n => 0, { freq: 150, terms: 128 })
+const oscL = new CustomOscillator(ctx, fn, n => 0, { freq: 150, terms: 128 })
+
 
 
 
@@ -57,14 +65,14 @@ dac.gain.value = 0.2;
 
 const scope = new Scope2D(ctx, document.body, {
   samples: 1024,
-  mode: 'line',
+  mode: 'points',
   size: 400,
 
 }); 
 
 const oscope = new Scope(ctx, document.body, {
   samples: 1024,
-  mode: 'line',
+  mode: 'points',
   size: 400,
 });
 

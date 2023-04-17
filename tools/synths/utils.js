@@ -13,6 +13,7 @@ export class Signal extends Operator {
     this._source = new ConstantSourceNode(ctx, { offset: value });
     this._source.start();
   }
+  get inlet () { return this._source.offset }
   get outlet () { return this._source; }
   get current () { return this._source.offset; }
 }
@@ -26,7 +27,6 @@ export class Sum extends Operator {
     super(ctx);
     this._gain = new GainNode(ctx);
     for (let input of ins) {
-      console.log(input)
       input.connect(this._gain);
     }
   }

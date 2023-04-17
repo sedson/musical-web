@@ -1,4 +1,4 @@
-import { Oscillator, CustomOscillator, PulseOscillator } from './oscillators.js';
+import { Oscillator, CustomOscillator, PulseOscillator, SuperOscillator } from './oscillators.js';
 import { Noise, RandomSource } from './noise.js';
 import { Scope, Scope2D } from './scopes.js';
 import { Spect } from './spect.js';
@@ -44,10 +44,27 @@ const fn2 = n =>
     ? 1 / Math.pow(n, 1.5)
     : 0;
 
-const oscR = new CustomOscillator(ctx, fn, n => 0, { freq: 150, terms: 128 })
-const oscL = new CustomOscillator(ctx, fn, n => 0, { freq: 150, terms: 128 })
+// const oscR = new CustomOscillator(ctx, fn, n => 0, { freq: 150, terms: 128 })
+// const oscL = new CustomOscillator(ctx, fn, n => 0, { freq: 150, terms: 128 })
 
 
+const oscR = new SuperOscillator(ctx, { freq: 120 });
+const oscL = new SuperOscillator(ctx, { freq: 122 });
+
+oscR.odd.value = 1;
+oscR.even.value = 0.5;
+
+oscL.odd.value = 1;
+oscL.even.value = 0.5;
+
+
+
+
+const LFO = new Oscillator(ctx, 'sine', {freq: 1.13 });
+const LFO2 = new Oscillator(ctx, 'sine', {freq: 0.12 });
+
+// LFO.connect(oscL.odd);
+// LFO2.connect(oscL.even);
 
 
 const merge = new StereoMerger(ctx);
@@ -65,18 +82,19 @@ dac.gain.value = 0.2;
 
 const scope = new Scope2D(ctx, document.body, {
   samples: 1024,
-  mode: 'points',
+  mode: 'line',
   size: 400,
 
 }); 
 
 const oscope = new Scope(ctx, document.body, {
   samples: 1024,
-  mode: 'points',
+  mode: 'line',
   size: 400,
 });
 
 const spect = new Spect(ctx, document.body);
+spect.mode = 'bars';
 
 
 scope.scaleX = 4;

@@ -1,4 +1,4 @@
-import { Oscillator, CustomOscillator, PulseOscillator } from './oscillators.js';
+import { Oscillator, CustomOscillator, PulseOscillator, SuperOscillator } from './oscillators.js';
 import { Noise, RandomSource } from './noise.js';
 // import { Scope } from './scope.js';
 import { Scope, Scope2D } from './scopes.js';
@@ -32,18 +32,22 @@ strt.onclick = () => {
 document.body.append(strt);
 
 
-const oscL = new Oscillator(ctx, 'sine', {freq: 100 });
-const oscR = new Oscillator(ctx, 'triangle', {freq: 101.9 })
+const oscR = new SuperOscillator(ctx, { freq: 100 });
+const oscL = new SuperOscillator(ctx, { freq: 101.9 });
+
+oscR.odd.value = 1;
+oscL.even.value = 1;
+// oscR.even.value = 0.4;
 
 
 const LFO = new Oscillator(ctx, 'triangle', { freq : 0 });
-LFO.connect(oscR);
-LFO.gain.value = 100;
+LFO.connect(oscR.inlet);
+LFO.gain.value = 20;
 
 const merge = new StereoMerger(ctx);
 const split = new StereoSplitter(ctx);
 
-const nn = new RandomSource(ctx, 2, 16);
+const nn = new RandomSource(ctx, 2, 8);
 const gg = new GainNode(ctx, { gain: 400 });
 nn.connect(gg);
 gg.connect(oscL.inlet);
@@ -52,9 +56,9 @@ gg.connect(LFO.inlet);
 
 
 
-//oscR.connect(oscL);
+oscR.connect(oscL);
 
-oscL.connect(oscR);
+// oscL.connect(oscR);
 
 
 oscL.connect(merge.L);
@@ -63,13 +67,14 @@ oscR.connect(merge.R);
 
 // merge.connect(dac);
 
-const filter = new BiquadFilterNode(ctx, {frequency: 1200, Q: 0.2 });
+const filter = new BiquadFilterNode(ctx, {frequency: 1200, Q: 5 });
 
 merge.connect(filter).connect(dac);
   
 const LF02 = new Oscillator(ctx, 'triangle', {freq: 0.1});
-LF02.gain.value = -800;
+LF02.gain.value = -600;
 LF02.connect(filter.frequency);
+
 
 dac.connect(split.inlet);
 dac.gain.value = 0.1;

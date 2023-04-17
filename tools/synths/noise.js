@@ -95,9 +95,6 @@ export class RandomSource extends Operator {
     // Connect and start.
     this._source.connect(this._gain);
     this._source.start(ctx.currentTime);
-
-    this.exposeParam('speed', this._source.playbackRate, 1, 0, 8, 0);
-    this.exposeParam('gain', this._gain.gain, 1, -1000, 1000, 0);
   }
 
   get outlet () { return this._gain; }
@@ -116,6 +113,9 @@ export class RandomSource extends Operator {
     this._source.start();
     this._source.connect(this._gain);
   }
+
+  get gain () { return this._gain.gain; }
+  get speed () { return this._source.playbackRate; }
 
   
 }

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" width="60" height="60">
+  <!-- <polyline points="4 2, 22 12, 4 22" fill="black" /> -->
+  <!-- <circle cx="30" cy="30" r="30" fill="white"/> -->
+  <!-- <circle cx="30" cy="30" r="26" fill="#222"/> -->
+  <!-- <polyline points="30 30, 60 60, 0 60, 30 30" fill="#222" /> -->
+  <!-- <path d="A 30 30 0 " -->
+   <path d="M 9 51 A 30 30 0 1 1 51 51" stroke="gray" stroke-width="8" fill="transparent" />
+
+
+</svg>

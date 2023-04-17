@@ -3,7 +3,7 @@
  */ 
 
 import { Operator } from './operator.js';
-import { Signal, Sum } from './utils.js';
+import { Signal, Sum, ZeroOneMix } from './utils.js';
 
 /**
  * @class Simple oscillator.
@@ -43,9 +43,20 @@ export class Oscillator extends Operator {
     this._oscillator.stop();
     this._oscillator.disconnect();
     this._oscillator = new OscillatorNode(this.ctx, { type: this.shape });
-    this._oscillator.start(this.ctx.currentTime);
     this._oscillator.connect(this._gain);
+    this._oscillator.start(this.ctx.currentTime);
     return this;
+  }
+
+  stop () {
+    this._oscillator.stop();
+    this._oscillator.disconnect();
+  }
+
+  start () {
+    this._oscillator = new OscillatorNode(this.ctx, { type: this.shape });
+    this._oscillator.connect(this._gain);
+    this._oscillator.start(this.ctx.currentTime);
   }
 
   get frequency () { return this._oscillator.frequency; }
@@ -71,6 +82,7 @@ export class CustomOscillator extends Oscillator {
     this._oscillator.setPeriodicWave(this._periodicWave);
   }
 }
+
 
 /**
  * @class Pulse oscillator with a variable pulse width.
@@ -101,4 +113,75 @@ export class PulseOscillator extends Oscillator {
   }
 
   get width () { return this._width.current; }
+}
+
+
+
+/**
+ * @class Super oscillator allows morphing between even and odd harmonics.
+ */ 
+export class SuperOscillator extends Oscillator {
+  constructor(ctx, options = {}) {
+    super(ctx, 'sine', options);
+    this._oscillator.disconnect();
+    this._oscillator = new OscillatorNode(ctx, { frequency: 0 });
+
+    this._freq = new Signal(ctx, options.freq || 440);
+
+    const cos = new Float32Array(1024);
+
+    this._evenHarmonics = new Float32Array(1024).map((_, n) => {
+      return n > 0 && ( n - 1 ) % 2 === 1
+        ? 1 / Math.pow(n, 1)
+        : 0;
+    });
+
+    this._oddHarmonics = new Float32Array(1024).map((_, n) => {
+      return n > 0 && ( n - 1 ) % 2 === 0
+        ? 1 / Math.pow(n, 1)
+        : 0;
+    });
+
+    this._evenWave = new PeriodicWave(ctx, { real: cos, imag: this._evenHarmonics});
+    this._oddWave = new PeriodicWave(ctx, { real: cos, imag: this._oddHarmonics});
+
+
+    this._evenOscillator = new OscillatorNode(ctx, { frequency: 0 });
+    this._evenOscillator.setPeriodicWave(this._evenWave);
+
+    this._oddOscillator  = new OscillatorNode(ctx, { frequency: 0 });
+    this._oddOscillator.setPeriodicWave(this._oddWave);
+
+
+    this._freq.connect(this._oscillator.frequency);
+    this._freq.connect(this._evenOscillator.frequency);
+    this._freq.connect(this._oddOscillator.frequency);
+
+
+    this._evenMix = new ZeroOneMix(ctx, 0);
+    this._oscillator.connect(this._evenMix.inlet);
+    this._evenOscillator.connect(this._evenMix.inlet2);
+
+    this._oddMix = new ZeroOneMix(ctx, 0);
+    this._oscillator.connect(this._oddMix.inlet);
+    this._oddOscillator.connect(this._oddMix.inlet2);
+
+
+    const g1 = new GainNode(ctx, { gain: 0.5 });
+    const g2 = new GainNode(ctx, { gain: 0.5 });
+
+    this._evenMix.connect(g1).connect(this._gain);
+    this._oddMix.connect(g2).connect(this._gain);
+
+    this._oscillator.start();
+    this._evenOscillator.start();
+    this._oddOscillator.start();
+  }
+
+  get frequency () { return this._freq.current; }
+  get gain () { return this._gain.gain; }
+  get inlet () { return this._freq.current; }
+  get outlet () { return this._gain; }
+  get odd () { return this._oddMix.mix; }
+  get even () { return this._evenMix.mix; }
 }

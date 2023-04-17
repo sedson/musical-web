@@ -30,4 +30,6 @@ export class SynthKit {
   LP2 (freg) {
     return new Filter2(this.ctx, {freq: freq, type: 'lowpass'});
   }
+
+  
 }

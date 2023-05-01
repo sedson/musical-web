@@ -5,6 +5,7 @@
 import { Operator } from './operator.js';
 import { Signal, Sum, ZeroOneMix } from './utils.js';
 
+
 /**
  * @class Simple oscillator.
  */ 
@@ -184,4 +185,50 @@ export class SuperOscillator extends Oscillator {
   get outlet () { return this._gain; }
   get odd () { return this._oddMix.mix; }
   get even () { return this._evenMix.mix; }
+}
+
+
+export class WarpOscillator extends Oscillator {
+
+  constructor(ctx, options) {
+    super(ctx, 'sine', options);
+
+    ctx.audioWorklet.addModule('./FMCoreProcessor.js').then(() => {
+      this.init()
+    })
+  }
+
+  init () {
+    this._oscillator.disconnect();
+    const freq = this._oscillator.frequency.value;
+    this._oscillator.stop();
+
+
+    this._oscillator = new AudioWorkletNode(this.ctx, 'fm-core-processor');
+    
+    this._frequency = this._oscillator.parameters.get('frequency');
+
+    this._crunch = this._oscillator.parameters.get('crunch');
+    this._bend = this._oscillator.parameters.get('bend');
+    this._stack = this._oscillator.parameters.get('stack');
+    this._noise = this._oscillator.parameters.get('noise');
+
+
+
+    this._frequency.value = freq;
+
+    this._oscillator.connect(this._gain);
+  }
+
+
+  get frequency () { return this._frequency; }
+  get crunch () { return this._crunch; }
+  get bend () { return this._bend; }
+  get stack () { return this._stack; }
+  get noise () { return this._noise; }
+  get gain () { return this._gain.gain; }
+  get inlet () { return this._frequency; }
+  get outlet () { return this._gain; }
+
+
 }

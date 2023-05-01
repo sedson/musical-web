@@ -1,7 +1,7 @@
 import { Oscillator, SuperOscillator } from '/tools/synths/oscillators.js';
 import { GuiKit } from '/tools/synths/guikit.js'
 import { Noise, RandomSource } from '/tools/synths/noise.js'
-import { Filter2 } from '/tools/synths/filters.js'
+import { Filter2, Filter3 } from '/tools/synths/filters.js'
 
 
 const page = document.body;
@@ -11,7 +11,7 @@ const panel = document.querySelector('.controls');
 // Global state.
 const orbs = [];
 const voices = [];
-const count = 10;
+const count = 6;
 const GAIN = 0;
 let on = false;
 let drift = 0;
@@ -44,14 +44,14 @@ const colC  = g.color('rgb(30, 80, 33)');
 
 
 // Sphere geometry.
-let sphere = g.shapes.icosphere(0.3, 2, false);
+let sphere = g.shapes.icosphere(0.2, 2, false);
 
 // Start at a random time.
 let time = Math.random() * 10000;
 
 // The orgainism.
 let org = app.node('org');
-org.geometry = app.addMesh(g.shapes.icosphere(0.6, 2, false).fill(colC));
+org.geometry = app.addMesh(g.shapes.icosphere(0.4, 2, false).fill(colC));
 
 
 const spin = app.node('turntable');
@@ -78,14 +78,14 @@ for (let i = 0; i < count; i++) {
   // Set some random value on each orb.
   orbRoot.rval = r();
 
-  orb.move(0, Math.random() * 0.3 + 0.2, 0);
+  orb.move(0, 0.24, 0);
   
   orbs.push(orbRoot);
   orbRoot.setParent(org);
 }
 
   app.camera.move(5, 2, 5);
-  app.camera.fov = 15;
+  app.camera.fov = 10;
 
 
 function draw (delta) {
@@ -100,7 +100,7 @@ function draw (delta) {
 
 
   app.renderer.uniform('time', time);
-  app.renderer.uniform('drift', drift);
+  app.renderer.uniform('drift', drift + 0.05);
   app.renderer.uniform('nScale', nScale);
 
 
@@ -130,8 +130,16 @@ const dac = ctx.createGain();
 
 dac.gain.value = 0.4;
 
-const filt = new Filter2(ctx, { frequency: 16000 });
-dac.connect(filt.inlet).connect(ctx.destination);
+const filt = new Filter3(ctx, { freq: 4000 });
+const compress = new DynamicsCompressorNode(ctx);
+
+compress.threshold.value = 12;
+compress.ratio.value = 0.1;
+
+
+dac.connect(filt.inlet);
+filt.connect(ctx.destination);
+
 window.ctx = ctx;
 
 
@@ -150,14 +158,16 @@ strt.onclick = () => {
   on = !on;
 }
 
-// const rand = new RandomSource(ctx, 0.2, 8);
+const rand = new RandomSource(ctx, 0.1, 8);
 // console.log(rand);
-// rand.gain.value = 500;
-// rand.speed.value = 0.2;
+rand.gain.value = 0;
+rand.speed.value = 0.1;
+const root = new Oscillator(ctx, 'sine', { freq: 200 });
+root.gain.value = 0.5;
+root.connect(dac);
+root.detune.value = -1200;
 
-// root.connect(dac);
-
-// rand.connect(root.frequency);
+rand.connect(root.frequency);
 const noiseOsc = new Noise(ctx, 2);
 
 noiseOsc.gain.value = 0;
@@ -165,11 +175,15 @@ noiseOsc.gain.value = 0;
 
 for (let i = 0; i < count; i++) {
   const delta = 0.1 * (i - (count / 2) / (count / 2));
-  const v = new Oscillator(ctx, 'sawtooth', { freq: 200 + delta * drift});
+  const v = new Oscillator(ctx, 'triangle', { freq: 200 });
   v.gain.value = 1 / ( count );
   v.connect(dac);
   // v.odd.value = Math.random();
   noiseOsc.connect(v.frequency);
+  rand.connect(v.frequency);
+
+  // const v = new Oscillator(ctx, 'sawtooth', { freq: 200 });
+
 
   // v.even.value = Math.random();
   voices.push(v);
@@ -185,8 +199,8 @@ slide1.link(val => {
   drift = val;
   for (let i = 0; i < count; i++) {
 
-    const delta = 0.1 * (i - (count / 2) / (count / 2));
-    voices[i].frequency.setTargetAtTime(120 + delta * drift * 10, 0, 1);
+    const delta = ((i + 1) - (count / 2)) / (count / 2);
+    voices[i].detune.setTargetAtTime(delta * drift * i * 50, 0, 0.01);
   }
 });
 
@@ -218,8 +232,8 @@ const slide2 = gk.slidebox();
 
 
 slide2.link(val => {
-  noiseOsc.gain.setTargetAtTime(val * 400, 0, 0.1);
-  nScale = val * 20 + 1;
+  noiseOsc.gain.setTargetAtTime(val * 300, 0, 0.1);
+  nScale = val * 12 + 1;
 })
 
 

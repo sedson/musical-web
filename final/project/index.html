@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="/style.css">
+  <link rel="stylesheet" type="text/css" href="/tools/synths/guikit.css">
+  <link rel="stylesheet" type="text/css" href="./style.css">
+  <title>Week 6</title>
+</head>
+<body>
+  <div class="controls">
+    <p>Control</p>
+  </div>
+  <div class="fs-panel">
+    <canvas id="canvas"></canvas>  
+  </div>
+  <script id="vert" type="x-shader/x-vertex">
+    #version 300 es
+
+    uniform mat4 uModel;
+    uniform mat4 uView;
+    uniform mat4 uProjection;
+    uniform float time;
+    uniform float drift;
+    uniform float nScale;
+
+    uniform float uObjectId;
+
+    in vec4 aPosition;
+    in vec3 aNormal;
+    in vec4 aColor;
+    in float aSurfaceId;
+
+    out vec4 vColor;
+
+    float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
+    vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
+    vec4 perm(vec4 x){return mod289(((x * 34.0) + 1.0) * x);}
+
+    float noise(vec3 p)
+    {
+      vec3 a = floor(p);
+      vec3 d = p - a;
+      d = d * d * (3.0 - 2.0 * d);
+
+      vec4 b = a.xxyy + vec4(0.0, 1.0, 0.0, 1.0);
+      vec4 k1 = perm(b.xyxy);
+      vec4 k2 = perm(k1.xyxy + b.zzww);
+
+      vec4 c = k2 + a.zzzz;
+      vec4 k3 = perm(c);
+      vec4 k4 = perm(c + 1.0);
+
+      vec4 o1 = fract(k3 * (1.0 / 41.0));
+      vec4 o2 = fract(k4 * (1.0 / 41.0));
+
+      vec4 o3 = o2 * d.z + o1 * (1.0 - d.z);
+      vec2 o4 = o3.yw * d.x + o3.xz * (1.0 - d.x);
+
+      return o4.y * d.y + o4.x * (1.0 - d.y);
+    }
+
+    vec3 hashId (float id) 
+    {
+      float r = fract(mod(id * 25738.32498, 456.221));
+      float g = fract(mod(id * 565612.08321, 123.1231));
+      float b = fract(mod(id * 98281.32498, 13.221));
+      return vec3(r, g, b);
+    }
+
+    void main() 
+    {
+      mat4 modelView = uView * uModel;
+      vec3 worldPos = (uModel * aPosition).xyz;
+      vec3 worldNormal = normalize(mat3(uModel) * aNormal.xyz);
+
+      vec3 displacement = drift * 0.2 * normalize(worldNormal) * noise((nScale * worldPos.xyz) + 0.3 * time);
+
+      
+      vec4 pos = vec4(aPosition.xyz + displacement, 1.0);
+
+      gl_Position = uProjection * uView * uModel * (pos);
+
+
+      vec3 vertexColor = aColor.rgb;
+      vec3 localNormal = aNormal.rgb * 0.5 + 0.5;
+      vec3 surfaceId = hashId(uObjectId + aSurfaceId);
+
+      vColor.a = 1.0;
+      vColor.rgb = vertexColor.rgb;
+    }
+  </script>
+
+  <script id="frag" type="x-shader/x-fragment">   
+    #version 300 es
+
+    precision mediump float;
+
+    in vec4 vColor;
+    out vec4 fragColor;
+
+    void main() {
+      fragColor = vec4(vColor.rgb, 1.0);
+    }
+  </script>
+
+  <script id type="text/javascript" src="./gum.js"></script>
+  <script type="module" src="./main.js"></script>
+
+</body>
+</html>

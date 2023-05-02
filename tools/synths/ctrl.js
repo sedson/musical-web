@@ -21,6 +21,12 @@ function tag (options) {
   return elem;
 }
 
+function style (element, options) {
+  for (const [attr, value] of Object.entries(options)) {
+    element.style[attr] = value;
+  }
+}
+
 /**
  * Clamp number x between min (default 0) and max (default 1).
  */ 
@@ -51,7 +57,7 @@ function rtod (radians) {
 }
 
 /**
- * Polar (angle - degrees, radius) to [x, y] coordinates. 
+ * Polar [angle:degrees, radius] to [x, y] coordinates. 
  */
 function polarToXY (angle, radius) {
   return [
@@ -522,7 +528,7 @@ class Dial extends Draggable {
 
 class Knob extends Draggable {
   constructor(context, target, settings = {}) {
-    super(context, target);
+    super(context, target, settings);
 
     this.width = settings.width || 60;
     this.height = settings.height || 60;
@@ -594,37 +600,64 @@ class Knob extends Draggable {
 
 class XYPad extends Draggable {
   constructor (context, targetX, targetY, settings = {}) {
-    super(context, targetX);
+    super(context, targetX, settings);
     
     this.targetY = targetY;
-    this.valueY = this.context[targetY] ?? 0;
+    this.valueY  = this.context[targetY] ?? 0;
 
     this.width  = settings.width  || 140;
     this.height = settings.height || 140;
 
-    this.svg = svg.svg(this.width, this.height);
-
     this.dotSize = 12;
 
+    // Foreground SVG has the dot and does not get transformed.
+    this.foreground = tag({
+      tag: 'div',
+      className: 'ctrl-xy-pad layer1'
+    });
+
+    // Translate on z for safari compatibility.
+    style(this.foreground, {
+      position: 'absolute',
+      left: 0, 
+      top: 0,
+      transform: 'translate3d(0, 0, 100px)'
+    });
+
+    this.svgForeground = svg.svg(this.width, this.height);
+  
+    this.dot = svg.ellipse(0, 0, this.dotSize - 2, this.dotSize - 2);
+    this.dot.setAttribute('stroke-width', 4);
+    this.dot.classList.add('fill-current', 'stroke-widget');
+
+    this.svgForeground.append(this.dot);
+    this.foreground.append(this.svgForeground);
+    
+
+    // Background element gets transformed and has the background SVG. 3D
+    // rotation acts strangely cross-browser when applied directly to an SVG.
+    this.background = tag({
+      tag: 'div',
+      className: 'ctrl-xy-pad layer0'
+    });
+
+    this.svgBackground = svg.svg(this.width, this.height);
+
     this.bg = svg.rect(this.dotSize, this.dotSize, this.width - 2 * this.dotSize, this.height - 2 * this.dotSize);
-    this.bg.classList.add('fill-background', 'ctrl-pad');
-    this.bg.classList.add('stroke-widget');
+    this.bg.classList.add('fill-background', 'ctrl-pad', 'stroke-widget');
     this.bg.setAttribute('stroke-width', 4);
     this.bg.setAttribute('rx', 12);
 
-    this.bg.style.transformOrigin = 'center';
+    this.svgBackground.append(this.bg);
+    this.background.append(this.svgBackground);
 
-    this.dot = svg.ellipse(this.width / 2, this.height / 2, this.dotSize - 2, this.dotSize - 2);
-    this.dot.setAttribute('stroke-width', 4);
-    this.dot.classList.add('fill-current');
-    this.dot.classList.add('stroke-widget');
 
-    this.svg.append(this.bg, this.dot);
-    this.element.append(this.svg);
+    this.element.append(this.background, this.foreground);
+
     this.element.classList.add('transparent');
 
     this.element.addEventListener('mousedown', (e) => {
-      this.rect = this.svg.getBoundingClientRect();
+      this.rect = this.element.getBoundingClientRect();
       this.boundMouseDown(e);
       this._update(0, e.clientX, e.clientY);
       this._onChange();
@@ -651,17 +684,18 @@ class XYPad extends Draggable {
     const skewY = -10 * (this.valueY - 0.5);
 
     let transform = 'perspective(140px)';
-    transform += ` rotateY(${skewX}deg)`;
     transform += ` rotateX(${skewY}deg)`;
-    this.bg.style.transform = transform;
+    transform += ` rotateY(${skewX}deg)`;
+    this.background.style.transform = transform;
   }
 
-  onChange () {
+  _onChange () {
+    super._onChange();
     this._setContextvalue(this.targetY, this.valueY);
   }
 
   onAppend () {
-    this.rect = this.svg.getBoundingClientRect();
+    this.rect = this.element.getBoundingClientRect();
     this._render();
   }
 }
@@ -676,14 +710,14 @@ export class CTRL {
     this.panel.classList.add('ctrl-root');
   }
 
-  button (context, target) {
-    const control = new ButtonControl(context, target);
+  button (context, target, settings) {
+    const control = new ButtonControl(context, target, settings);
     control.parent = this;
     return control;
   }
   
-  bool (context, target) {
-    const control = new Bool(context, target);
+  bool (context, target, settings) {
+    const control = new Bool(context, target, settings);
     control.parent = this;
     return control;
   }
@@ -698,38 +732,38 @@ export class CTRL {
     return controls;
   }
 
-  toggle (context, target) {
-    const control = new Toggle(context, target);
+  toggle (context, target, settings) {
+    const control = new Toggle(context, target, settings);
     control.parent = this;
     return control;
   }
 
-  drag (context, target) {
-    const control = new DraggableNumber(context, target);
+  drag (context, target, settings) {
+    const control = new DraggableNumber(context, target, settings);
     control.parent = this;
     return control;
   }
 
-  slider (context, target) {
-    const control = new Slider(context, target);
+  slider (context, target, settings) {
+    const control = new Slider(context, target, settings);
     control.parent = this;
     return control;
   }
   
-  dial (context, target) {
-    const control = new Dial(context, target);
+  dial (context, target, settings) {
+    const control = new Dial(context, target, settings);
     control.parent = this;
     return control;
   }
 
-  knob (context, target) { 
-    const control = new Knob(context, target);
+  knob (context, target, settings) { 
+    const control = new Knob(context, target, settings);
     control.parent = this;
     return control;
   }
 
-  pad (context, targetX, targetY) {
-    const control = new XYPad(context, targetX, targetY);
+  pad (context, targetX, targetY, settings) {
+    const control = new XYPad(context, targetX, targetY, settings);
     control.parent = this;
     return control;
   }

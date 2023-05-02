@@ -3,6 +3,9 @@ import { Noise, RandomSource } from './noise.js';
 import { Scope, Scope2D } from './scopes.js';
 import { Spect } from './spect.js';
 import { ZeroOneMix, StereoMerger, StereoSplitter } from './utils.js';
+import { CTRL } from './ctrl.js';
+
+
 
 
 
@@ -90,14 +93,14 @@ dac.gain.value = 0.2;
 
 const scope = new Scope2D(ctx, document.body, {
   samples: 1024,
-  mode: 'line',
+  mode: 'points',
   size: 400,
 
 }); 
 
 const oscope = new Scope(ctx, document.body, {
   samples: 1024,
-  mode: 'line',
+  mode: 'points',
   size: 600,
 });
 
@@ -115,6 +118,42 @@ scope.pointSize = 4;
 
 oscL.connect(scope.inlet);
 oscR.connect(scope.inlet2);
+
+const ctrl = new CTRL(document.getElementById('controls'));
+
+const state = {
+  bend: 0.5,
+  stack: 0,
+  crunch: 0.5,
+  noise: 0,
+};
+
+// const bendKnob = ctrl.slider(state, 'bend');
+// const stackKnob = ctrl.slider(state, 'stack');
+// const crunchKnob = ctrl.slider(state, 'crunch');
+// const noiseKnob = ctrl.slider(state, 'noise');
+
+const ctrlA = ctrl.pad(state, 'bend', 'crunch');
+const ctrlB = ctrl.pad(state, 'noise', 'stack');
+
+
+
+for (let a of [ ctrlA, ctrlB ]) {
+  ctrl.append(a);
+}
+
+const lerp = (a, b, t) => {
+  return a + (t * (b - a));
+}
+
+ctrl.onChange = function () {
+  oscR.bend.setTargetAtTime(lerp(0.2, 2, state.bend), 0, 0.1);
+  oscR.crunch.setTargetAtTime(lerp(0.2, 2, state.crunch), 0, 0.1);
+  oscR.stack.setTargetAtTime(lerp(0, 5, state.stack), 0, 0.1);
+  oscR.noise.setTargetAtTime(lerp(0, 0.1, state.noise), 0, 0.1);
+
+
+}
 
 
 

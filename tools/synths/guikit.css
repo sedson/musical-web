@@ -40,6 +40,7 @@
 .ctrl-elem {
   display: inline-block;
   user-select: none;
+  -webkit-user-select: none;
   line-height: 0;
   width: auto;
   cursor: pointer;

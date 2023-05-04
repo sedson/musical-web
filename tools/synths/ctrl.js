@@ -5,7 +5,7 @@ import * as svg from './svg.js';
 // UTILITIES
 // -----------------------------------------------------------------------------
 /**
- * Create a DOM element from a object full of options. The keys in the object 
+ * Create a DOM element from a bag of options. The keys in the object 
  * should be the camel-cased JS versions of HTML properties.
  */ 
 function tag (options) {
@@ -21,6 +21,9 @@ function tag (options) {
   return elem;
 }
 
+/**
+ * Apply a bag of styles to an element.
+ */ 
 function style (element, options) {
   for (const [attr, value] of Object.entries(options)) {
     element.style[attr] = value;
@@ -432,7 +435,6 @@ class Slider extends Draggable {
     let internal = 0;
     if (this.direction === 'vertical') {
       internal = 1 - clamp((y - this.rect.top) / this.rect.height);
-      console.log(internal)
     } else {
       internal = clamp((x - this.rect.left) / this.rect.width);
     }
@@ -453,6 +455,103 @@ class Slider extends Draggable {
   }
 }
 
+
+/**
+ * A alternate slider.
+ */ 
+class Slider2 extends Draggable {
+  constructor (context, target, settings = {}) {
+    super(context, target);
+
+    this.width = settings.width || 140;
+    this.height = settings.height || 20;
+
+    this.direction = settings.direction || 'horizontal';
+
+    this.svg = svg.svg(this.width, this.height);
+    this.svg.classList.add('ctrl-svg', 'ctrl-slider2');
+    this.svg.classList.add('transparent');
+    this.element.classList.add('transparent');
+
+    this.notchCount = settings.notchCount || 5;
+    this.knobSize = 8;
+    this.pad = 4;
+    
+    this.line = svg.path();
+    this.knob = svg.ellipse(0, 0, this.knobSize - 2, this.knobSize - 2);
+    this.knob.classList.add('fill-current');
+
+    if (this.direction === 'vertical') {
+
+      let path = svg.makePathRel([[this.width / 2, this.knobSize], [0, this.height - 2 * this.knobSize]]);
+      
+      for (let i = 0; i < this.notchCount; i++) {
+
+        const height = this.height - 2 * this.knobSize;
+        const y = this.knobSize + height * i / (this.notchCount - 1);
+        path += svg.makePathAbs([[this.pad, y], [this.width - this.pad, y]]);
+      }
+
+      this.line.setAttribute('d', path);
+
+    } else {
+
+      let path = svg.makePathRel([[this.knobSize, this.height / 2], [this.width - 2 * this.knobSize, 0]]);
+
+      for (let i = 0; i < this.notchCount; i++) {
+        const width = this.width - 2 * this.knobSize;
+        const x = this.knobSize + width * i / (this.notchCount - 1);
+        path += svg.makePathAbs([[x, this.pad], [x, this.height - this.pad]]);
+      }
+
+      this.line.setAttribute('d', path);
+    }
+
+    this.line.setAttribute('stroke-width', 4);
+    this.line.classList.add('stroke-widget');
+
+    this.rect = this.svg.getBoundingClientRect();
+
+    this.svg.append(this.line, this.knob);
+
+    this.element.append(this.svg);
+
+    this.element.addEventListener('mousedown', (e) => {
+      this.rect = this.svg.getBoundingClientRect();
+      this.boundMouseDown(e);
+      this._update(0, e.clientX, e.clientY);
+      this._onChange();
+      this._render();
+    });
+  }
+
+  update (delta, x, y) {
+    let internal = 0;
+    if (this.direction === 'vertical') {
+      internal = 1 - clamp((y - this.rect.top) / this.rect.height);
+    } else {
+      internal = clamp((x - this.rect.left) / this.rect.width);
+    }
+    this.value = clamp(internal, 0, 1);
+  }
+
+  render () {
+    if (this.direction === 'vertical') {
+      this.knob.setAttribute('cx', this.width / 2);
+      this.knob.setAttribute('cy', (1 - this.value) * (this.rect.height - 2 * this.knobSize) + this.knobSize);
+    } else {
+      this.knob.setAttribute('cy', this.height / 2);
+      this.knob.setAttribute('cx', this.value * (this.rect.width - 2 * this.knobSize) + this.knobSize);
+    }
+  }
+
+  onAppend () {
+    this.rect = this.element.getBoundingClientRect();
+    this._render();
+  }
+}
+
+
 class Dial extends Draggable {
   constructor(context, target, settings = {}) {
     super(context, target);
@@ -470,17 +569,19 @@ class Dial extends Draggable {
     this.bg = svg.rect(0, 0, this.width, this.height);
     this.bg.classList.add('ctrl-svg-bg');
 
-    this.strokeWidth = 4;
+    this.strokeWidth = 6;
 
     this.track = svg.path();
     this.track.classList.add('stroke-widget');
     this.track.setAttribute('stroke-width', this.strokeWidth);
     this.track.setAttribute('fill', 'none');
+    this.track.setAttribute('stroke-linecap', 'round');
 
     this.filledTrack = svg.path();
     this.filledTrack.classList.add('stroke-current');
     this.filledTrack.setAttribute('stroke-width', this.strokeWidth);
     this.filledTrack.setAttribute('fill', 'none');
+    this.filledTrack.setAttribute('stroke-linecap', 'round');
 
     this.inner = svg.ellipse(this.width / 2,  this.height / 2, 0, 0);
     this.inner.classList.add('ctrl-svg-fill');
@@ -554,8 +655,10 @@ class Knob extends Draggable {
 
     this.notch = svg.path();
 
-    this.notch.setAttribute('d', svg.ptsToPath([[this.width / 2, this.height / 2], [12, 0]]));
+    this.notch.setAttribute('d', svg.makePathRel([[this.width / 2, this.height / 2], [10, 0]]));
     this.notch.classList.add('stroke-background');
+    this.notch.setAttribute('stroke-linecap', 'round');
+
 
     this.knob.append(this.circle, this.notch);
 
@@ -697,6 +800,51 @@ class XYPad extends Draggable {
   onAppend () {
     this.rect = this.element.getBoundingClientRect();
     this._render();
+  } 
+}
+
+class LinePlot extends Control {
+  constructor (context, buffer = [0, 1], settings = {}) {
+    super(context, '');
+    this.width = settings.width || 140;
+    this.height = settings.height || 80;
+
+    this.strokeWidth = settings.strokeWidth || 4;
+
+    this.element = tag({
+      tag: 'div',
+      className: 'ctrl-elem ctrl-plot transparent'
+    });
+
+    this.svg = svg.svg(this.width, this.height);
+
+
+    this.path = svg.path();
+    this.path.setAttribute('fill', 'none');
+    this.path.setAttribute('stroke-width', this.strokeWidth);
+    this.path.setAttribute('stroke-linecap', 'round');
+    this.path.setAttribute('stroke-linejoin', 'round');
+    this.path.classList.add('stroke-current');
+    this.svg.append(this.path);
+    this.element.append(this.svg);
+    this.buffer = buffer;
+  }
+
+  setBuffer (buffer) {
+    this.buffer = buffer;
+    this._render();
+  }
+
+  render () {
+    this.rect = this.element.getBoundingClientRect();
+    const len = this.buffer.length;
+    const xVals = this.buffer.map((_, i) => (this.rect.width - 8) * i / (len - 1) + 4);
+    const yVals = this.buffer.map((n, i) => this.rect.height / 2 - n * this.rect.height / 2);
+    const xyVals = [];
+    for (let i = 0; i < len; ++i) {
+      xyVals.push([xVals[i], yVals[i]]);
+    }
+    this.path.setAttribute('d', svg.makePathAbs(xyVals))
   }
 }
 
@@ -749,6 +897,12 @@ export class CTRL {
     control.parent = this;
     return control;
   }
+
+  slider2 (context, target, settings) {
+    const control = new Slider2(context, target, settings);
+    control.parent = this;
+    return control;
+  }
   
   dial (context, target, settings) {
     const control = new Dial(context, target, settings);
@@ -764,6 +918,12 @@ export class CTRL {
 
   pad (context, targetX, targetY, settings) {
     const control = new XYPad(context, targetX, targetY, settings);
+    control.parent = this;
+    return control;
+  }
+
+  plot (context, buffer, settings) {
+    const control = new LinePlot(context, buffer, settings);
     control.parent = this;
     return control;
   }

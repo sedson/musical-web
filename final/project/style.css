@@ -6,7 +6,7 @@
   src: url(/fonts/IBMPlexMono-ExtraLight.ttf) format('truetype');
 }
 body {
-  background-color: #222;
+  background-color: #bfabcc;
   color: gray;
   font-family: IBM Plex Mono, monospace;
   font-size: 14px;
@@ -33,7 +33,10 @@ header {
 }
 .controls {
   width: 300px;
-  padding: 1em;
+  background-color: #0004;
+  padding: 1rem;
+  --text-color: whitesmoke;
+  color: whitesmoke;
 }
 
 

@@ -1,5 +1,5 @@
-import { Oscillator, SuperOscillator } from '/tools/synths/oscillators.js';
 import { CTRL } from '/tools/synths/ctrl.js'
+import { Oscillator } from '/tools/synths/oscillators.js';
 import { Noise, RandomSource } from '/tools/synths/noise.js'
 import { Filter2, Filter3 } from '/tools/synths/filters.js'
 
@@ -35,14 +35,18 @@ app.frag = document.getElementById('frag').innerText.trim();
 app.addEffect();
 
 // Colors
-const bg    = g.color('#222');
+const bg    = g.color('grayishlavenderb');
 const colA  = g.color('apricotyellow');
-const colB  = g.color('green');
-const colC  = g.color('rgb(30, 80, 33)');
+const colB  = g.color('grenadinepink');
+const colC  = g.color('orange');
 
+let plane = g.shapes.quad(20).fill(g.color('purple'));
+let groundNode = app.node('ground');
+groundNode.transform.position.y = -1;
+groundNode.geometry = app.addMesh(plane);
 
 // Sphere geometry.
-let sphere = g.shapes.icosphere(0.2, 2, false);
+let sphere = g.shapes.icosphere(0.1, 2, false);
 
 // Start at a random time.
 let time = Math.random() * 10000;
@@ -82,8 +86,11 @@ for (let i = 0; i < count; i++) {
   orbRoot.setParent(org);
 }
 
-  app.camera.move(5, 2, 5);
-  app.camera.fov = 10;
+
+
+
+app.camera.move(5, 2, 5);
+app.camera.fov = 10;
 
 
 function draw (delta) {

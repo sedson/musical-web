@@ -36,6 +36,7 @@
     in float aSurfaceId;
 
     out vec4 vColor;
+    out vec3 vWorldNormal;
 
     float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
     vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
@@ -81,7 +82,7 @@
       vec3 displacement = drift * 0.2 * normalize(worldNormal) * noise((nScale * worldPos.xyz) + 0.3 * time);
 
       
-      vec4 pos = vec4(aPosition.xyz + displacement, 1.0);
+      vec4 pos = vec4(aPosition.xyz +  displacement, 1.0);
 
       gl_Position = uProjection * uView * uModel * (pos);
 
@@ -92,6 +93,7 @@
 
       vColor.a = 1.0;
       vColor.rgb = vertexColor.rgb;
+      vWorldNormal = worldNormal;
     }
   </script>
 
@@ -101,10 +103,20 @@
     precision mediump float;
 
     in vec4 vColor;
+    in vec3 vWorldNormal;
     out vec4 fragColor;
 
     void main() {
+      vec3 lightDir = normalize(vec3(0.2, 0.6, 0.2));
+      float ndotl = dot(normalize(vWorldNormal), lightDir);
+      ndotl = clamp(ndotl, 0.0, 1.0);
+      ndotl = smoothstep(0.1, 0.3, ndotl);
+      ndotl = clamp(ndotl + 0.8, 0.0, 1.0);
+
+
       fragColor = vec4(vColor.rgb, 1.0);
+      fragColor.rgb *= ndotl;
+
     }
   </script>
 

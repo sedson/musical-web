@@ -22,34 +22,27 @@ function attr (target, attributes) {
 /**
  * Get an SVG past form a list of points. [[0, 0], [0, 1]]
  */ 
-export function ptsToPath (pts) {
+export function makePathRel (pts, closed = false) {
   let str = 'm ' + pts[0][0] + ',' + pts[0][1] + ' l ';
   for (let i = 1; i < pts.length; i++) {
-    str += pts[i][0] + ',' + pts[i][1];
+    str += pts[i][0] + ',' + pts[i][1] + ' ';
   }
+  if (closed) str += ' z';
   return str;
 }
 
 /**
  * Get an SVG past form a list of points. [[0, 0], [0, 1]]
  */ 
-export function ptsToPathAbs (pts, closed = false) {
-  let x1 = pts[0][0];
-  let y1 = pts[0][1];
-  let x2, y2;
-  let str = '';
-
-  str += 'm ' + x1 + ',' + y1;
-  str += ' l ';
-
+export function makePathAbs (pts, closed = false) {
+   let str = 'M ' + pts[0][0] + ',' + pts[0][1] + ' L ';
   for (let i = 1; i < pts.length; i++) {
-    const x = pts[i][0] - pts[i - 1][0];
-    const y = pts[i][1] - pts[i - 1][1];
-    str += x + ',' + y + ' ';
+    str += pts[i][0] + ',' + pts[i][1] + ' ';
   }
   if (closed) str += ' z';
   return str;
 }
+
 
 /**
  * Create an SVG root element.

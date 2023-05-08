@@ -2,6 +2,18 @@ import { Operator } from './operator.js';
 import { ZeroOneMix, gain } from './utils.js';
 import * as filters from './filters.js';
 
+
+function IR (ctx, duration, decay) {
+  const length = ctx.sampleRate * duration;
+  const buff = ctx.createBuffer(1, length, ctx.sampleRate);
+  const chan0 = buff.getChannelData(0);
+  for (var i = 0; i < length; i++) {
+    chan0[i] = (2 * Math.random() - 1) * (2 * Math.random() - 1) * Math.pow(1 - i/length, decay);
+  }
+  return buff;
+}
+
+
 export class Effect extends Operator {
   constructor(ctx) {
     super(ctx);
@@ -25,9 +37,17 @@ export class Effect extends Operator {
 }
 
 
+export class CheapVerb extends Effect {
+  constructor (ctx) {
+    super(ctx);
 
+    this._verb = new ConvolverNode(ctx, { buffer: IR(ctx, 3, 3)});
 
-
+    this._chainIn
+      .connect(this._verb)
+      .connect(this._chainOut);
+  }
+}
 
 export class Distort extends Effect {
   constructor (ctx) {
@@ -36,7 +56,7 @@ export class Distort extends Effect {
     const samples = 512;
     const curve = new Float32Array(samples).map((_, n) => {
       const x = 2 * (n / samples) - 1; 
-      const y = Math.tanh(Math.E * x);
+      const y = Math.tanh(Math.E * x) + Math.random() * 0.001;
       return y;
     });
 

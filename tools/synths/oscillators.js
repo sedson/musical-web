@@ -26,7 +26,7 @@ export class Oscillator extends Operator {
      */ 
     this._oscillator = new OscillatorNode(ctx, {
       type: shape,
-      frequency: options.freq || 440
+      frequency: options.freq ?? 440
     });
     
     /** 

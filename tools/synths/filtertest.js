@@ -1,7 +1,6 @@
 import { Oscillator, CustomOscillator, PulseOscillator } from './oscillators.js';
 import { Noise, RandomSource } from './noise.js';
-import { Scope, Scope2D } from './scopes.js';
-import { Spect } from './spect.js';
+import { Scope, Scope2D, Spect } from './scopes.js';
 import { ZeroOneMix, StereoMerger, StereoSplitter } from './utils.js';
 import { Filter, Filter2, Filter3, FeedbackCombFilter, FeedforwardCombFilter } from './filters.js';
 import { Distort, Vocalizer } from './effects.js';

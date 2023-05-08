@@ -9,8 +9,14 @@
   <title>Week 6</title>
 </head>
 <body>
-  <div class="controls">
-    <p>Control</p>
+  <div class="noise-controls">
+    <p class="title">FIELD</p>
+  </div>
+  <div class="pluck-controls">
+    <p class="title">PLUCK</p>
+  </div>
+  <div class="global-controls">
+    <p class="title">OUT</p>
   </div>
   <div class="fs-panel">
     <canvas id="canvas"></canvas>  
@@ -24,7 +30,12 @@
     uniform float time;
     uniform float drift;
     uniform float nScale;
+    uniform float uNoise;
+    uniform float uX;
+    uniform float uZ;
 
+
+    uniform float uParticleNoise;
     uniform float uObjectId;
 
     in vec4 aPosition;
@@ -33,7 +44,10 @@
     in float aSurfaceId;
 
     out vec4 vColor;
+    out vec3 vWorldPos;
+    out float vHeight;
 
+    // Book of shaders.
     float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
     vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
     vec4 perm(vec4 x){return mod289(((x * 34.0) + 1.0) * x);}
@@ -61,6 +75,25 @@
       return o4.y * d.y + o4.x * (1.0 - d.y);
     }
 
+    float noise2 (vec3 p) {
+      p.x += time * -0.05;
+      p.z += time * 0.03;
+
+
+      float n1 = noise(p);
+      float n2 = noise(p + 100.0);
+
+      p.x += n1 * 2.0;
+      p.z += n2 * 3.0;
+
+      float n3 = noise(vec3(p.x, 0.0, p.z));
+
+      float n4 = clamp(noise(4.0 * p) * 0.1 + n3, 0.0, 1.0);
+
+      n4 = pow(n4, 0.4) * 2.0 - 1.0;
+      return n4;
+    }
+
     vec3 hashId (float id) 
     {
       float r = fract(mod(id * 25738.32498, 456.221));
@@ -75,12 +108,18 @@
       vec3 worldPos = (uModel * aPosition).xyz;
       vec3 worldNormal = normalize(mat3(uModel) * aNormal.xyz);
 
-      vec3 displacement = drift * 0.2 * normalize(worldNormal) * noise((nScale * worldPos.xyz) + 0.3 * time);
+      float nX = mix(worldPos.x, uX, uParticleNoise);
+      float nZ = mix(worldPos.z, uZ, uParticleNoise);
 
-      
-      vec4 pos = vec4(aPosition.xyz + displacement, 1.0);
+      vec3 noisePos = nScale * vec3(nX, 0.0, nZ);
 
-      gl_Position = uProjection * uView * uModel * (pos);
+      float scaler = max(uNoise, uParticleNoise);
+      float displacement = scaler * drift * 0.2 * noise2(noisePos);
+
+      vec4 pos = vec4(worldPos, 1.0);
+      pos.y += displacement;
+
+      gl_Position = uProjection * uView * (pos);
 
 
       vec3 vertexColor = aColor.rgb;
@@ -88,7 +127,11 @@
       vec3 surfaceId = hashId(uObjectId + aSurfaceId);
 
       vColor.a = 1.0;
+
       vColor.rgb = vertexColor.rgb;
+      vWorldPos = pos.xyz;
+      vHeight = vWorldPos.y;
+      gl_PointSize = 20.0;
     }
   </script>
 
@@ -98,10 +141,31 @@
     precision mediump float;
 
     in vec4 vColor;
+    in vec3 vWorldPos;
+    in float vHeight;
+
+    uniform highp float uNoise;
+    uniform float uGlow;
+
+
     out vec4 fragColor;
 
     void main() {
-      fragColor = vec4(vColor.rgb, 1.0);
+      if (length(vWorldPos.xz) > 0.5) {
+        discard;
+      }
+
+      float amt = smoothstep(0.0, 0.2, vWorldPos.y);
+
+      vec3 color = mix(vec3(0.5, 0.0, 0.5), vec3(1.0, 0.4, 1.0), amt);
+
+      vec3 norm = normalize(cross(dFdx(vWorldPos), dFdy(vWorldPos)));
+      float steepness = dot(norm, vec3(1.0, 1.0, 0));
+
+      amt += steepness * 0.0;
+      amt *= uNoise;
+      fragColor = vec4(mix(vec3(vColor), vec3(1.0, 0.8, 1.0), amt), 1.0);
+      fragColor.rgb = mix(fragColor.rgb, vec3(1.0, 1.0, 1.0), uGlow);
     }
   </script>
 

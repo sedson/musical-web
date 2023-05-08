@@ -418,7 +418,7 @@ class Slider extends Draggable {
     this.inner = svg.rect(0, 0, this.width, this.height);
     this.inner.classList.add('fill-current');
 
-    this.rect = this.svg.getBoundingClientRect();
+    this.rect = this.element.getBoundingClientRect();
 
     this.svg.append(this.bg, this.inner);
     this.element.append(this.svg);
@@ -459,12 +459,12 @@ class Slider extends Draggable {
 /**
  * A alternate slider.
  */ 
-class Slider2 extends Draggable {
+class Axis extends Draggable {
   constructor (context, target, settings = {}) {
     super(context, target);
 
     this.width = settings.width || 140;
-    this.height = settings.height || 20;
+    this.height = settings.height || 40;
 
     this.direction = settings.direction || 'horizontal';
 
@@ -474,12 +474,13 @@ class Slider2 extends Draggable {
     this.element.classList.add('transparent');
 
     this.notchCount = settings.notchCount || 5;
-    this.knobSize = 8;
-    this.pad = 4;
+    this.knobSize = 12;
+    this.pad = 12;
     
     this.line = svg.path();
     this.knob = svg.ellipse(0, 0, this.knobSize - 2, this.knobSize - 2);
-    this.knob.classList.add('fill-current');
+    this.knob.classList.add('fill-current', 'stroke-widget');
+    this.knob.setAttribute('stroke-width', 4);
 
     if (this.direction === 'vertical') {
 
@@ -778,8 +779,8 @@ class XYPad extends Draggable {
 
 
   render () {
-    const posX = clamp(this.value * this.rect.width, this.dotSize, this.rect.width - this.dotSize);
-    const posY = clamp((1 - this.valueY) * this.rect.height, this.dotSize, this.rect.height - this.dotSize);
+    const posX = clamp(this.value * this.rect.width, this.dotSize, this.width - this.dotSize);
+    const posY = clamp((1 - this.valueY) * this.rect.height, this.dotSize, this.height - this.dotSize);
     this.dot.setAttribute('cx', posX);
     this.dot.setAttribute('cy', posY);
 
@@ -803,7 +804,7 @@ class XYPad extends Draggable {
   } 
 }
 
-class LinePlot extends Control {
+class BufferPlot extends Draggable {
   constructor (context, buffer = [0, 1], settings = {}) {
     super(context, '');
     this.width = settings.width || 140;
@@ -811,13 +812,11 @@ class LinePlot extends Control {
 
     this.strokeWidth = settings.strokeWidth || 4;
 
-    this.element = tag({
-      tag: 'div',
-      className: 'ctrl-elem ctrl-plot transparent'
-    });
+    this.polarity = settings.polarity || 'bipolar';
+
+    this.element.classList.add('ctrl-plot', 'transparent');
 
     this.svg = svg.svg(this.width, this.height);
-
 
     this.path = svg.path();
     this.path.setAttribute('fill', 'none');
@@ -828,6 +827,8 @@ class LinePlot extends Control {
     this.svg.append(this.path);
     this.element.append(this.svg);
     this.buffer = buffer;
+
+    this._render();
   }
 
   setBuffer (buffer) {
@@ -839,7 +840,13 @@ class LinePlot extends Control {
     this.rect = this.element.getBoundingClientRect();
     const len = this.buffer.length;
     const xVals = this.buffer.map((_, i) => (this.rect.width - 8) * i / (len - 1) + 4);
-    const yVals = this.buffer.map((n, i) => this.rect.height / 2 - n * this.rect.height / 2);
+    let yVals;
+    if (this.polarity === 'unipolar') {
+      yVals = this.buffer.map((n, i) => (this.rect.height - 8) - n * (this.rect.height - 8) + 4);
+    } else {
+      yVals = this.buffer.map((n, i) => (this.rect.height / 2 - 8) - n * (this.rect.height / 2 - 8) + 4);    
+    }
+
     const xyVals = [];
     for (let i = 0; i < len; ++i) {
       xyVals.push([xVals[i], yVals[i]]);
@@ -849,12 +856,52 @@ class LinePlot extends Control {
 }
 
 
+class DrawBuffer extends BufferPlot {
+  constructor (context, buffer = [ 0, 1 ], settings = {}) {
+    super(context, buffer, settings);
+  }
+
+  mouseXToIndex (x) {
+    const nX = clamp((x - this.rect.left) / this.rect.width);
+    const index = Math.round(nX * (this.buffer.length - 1));
+    return index;
+  }
+
+  mouseYToValue (y) {
+    if (this.polarity === 'unipolar') {
+      const nY = clamp((y - this.rect.top) / this.rect.height);
+      const value = (1 - nY);
+      return value;
+    }
+    const nY = clamp((y - this.rect.top) / this.rect.height);
+    const value = 2 * (1 - nY) - 1;
+    return value;
+  }
+
+  _update(delta, x, y) {
+    super._update(delta, x, y);
+    const index = this.mouseXToIndex(x);
+    const value = this.mouseYToValue(y);
+    this.buffer[index] = value;
+  }
+
+
+
+}
+
+
+
+class EnvelopeControl extends Control {
+  // constructor ()
+}
+
+
 // -----------------------------------------------------------------------------
 // EXPORT
 // -----------------------------------------------------------------------------
 export class CTRL {
   constructor ( panel ) {
-    this.panel = panel || tag();
+    this.panel = panel || tag({});
     this.panel.classList.add('ctrl-root');
   }
 
@@ -898,8 +945,8 @@ export class CTRL {
     return control;
   }
 
-  slider2 (context, target, settings) {
-    const control = new Slider2(context, target, settings);
+  axis (context, target, settings) {
+    const control = new Axis(context, target, settings);
     control.parent = this;
     return control;
   }
@@ -923,17 +970,30 @@ export class CTRL {
   }
 
   plot (context, buffer, settings) {
-    const control = new LinePlot(context, buffer, settings);
+    const control = new BufferPlot(context, buffer, settings);
     control.parent = this;
     return control;
   }
 
-  append (control) {
+  doodle (context, buffer, settings) {
+    const control = new DrawBuffer(context, buffer, settings);
+    control.parent = this;
+    return control;
+  }
+
+  _append (control) {
     if (control.element) {
       this.panel.append(control.element); 
       control._onAppend();
     } else {
       this.panel.append(control);
+    }
+  }
+
+  append (...args) {
+    for (let arg of args) {
+      this._append(arg);
+      console.log(arg);
     }
   }
 }

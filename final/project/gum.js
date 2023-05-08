@@ -787,7 +787,7 @@ var gum = (function (exports) {
       "vert": "#version 300 es\n\nuniform mat4 uModel;\nuniform mat4 uView;\nuniform mat4 uProjection;\nuniform float uNear;\nuniform float uFar;\nuniform float uObjectId;\n\nin vec4 aPosition;\nin vec4 aColor;\n\nin vec4 aNormal;\nin float aSurfaceId;\n\nout vec4 vWorldPosition;\nout vec4 vColor;\nout vec3 vWorldNormal;\nout vec3 vViewNormal;\nout vec3 vSurfaceId;\nout float vDepth;\nout float vId;\n\n/**\n *\n */\nvec3 hashId(float id) {\n  float r = fract(mod(id * 25738.32498, 456.221));\n  float g = fract(mod(id * 565612.08321, 123.1231));\n  float b = fract(mod(id * 98281.32498, 13.221));\n  return vec3(r, g, b);\n}\n\n/**\n *\n */\nvoid main() {\n  gl_PointSize = 4.0;\n  mat4 modelView = uView * uModel;\n  mat3 normMatrix = transpose(inverse(mat3(modelView)));\n  vViewNormal = normalize(normMatrix * aNormal.xyz);\n  vWorldNormal = normalize(mat3(uModel) * aNormal.xyz);\n  vColor = aColor;\n\n  gl_Position = uProjection * uView * uModel * aPosition;\n\n  vec3 rounded = round(gl_Position.xyz * 10.0) / 10.0;\n  // gl_Position.xyz = rounded;\n\n  float id = mod(aSurfaceId + uObjectId, 255.0);\n  vId = id / 255.0 + (1.0 / 255.0);\n\n  vSurfaceId = hashId(aSurfaceId + uObjectId);\n\n  vWorldPosition = gl_Position;\n}"
     },
     "post-chromatic": {
-      "frag": "#version 300 es\n\nprecision mediump float;\n\nuniform sampler2D uMainTex;\nuniform sampler2D uDepthTex;\nuniform vec2 uTexSize;\nuniform float uNear;\nuniform float uFar;\n\n\nin vec2 vTexCoord;\nout vec4 fragColor;\n\n\nvoid main() {\n  vec2 rOff = vec2(0.0, 4.0);\n  vec2 gOff = vec2(0.0, -0.0);\n  vec2 bOff = vec2(4.0, 0.0);\n  vec2 pixelSize = 1.0 / uTexSize;\n  vec4 col = texture(uMainTex, vTexCoord);\n\n  fragColor = col;\n  float r = texture(uMainTex, vTexCoord + (pixelSize * rOff)).r;\n  float g = texture(uMainTex, vTexCoord + (pixelSize * gOff)).g;\n  float b = texture(uMainTex, vTexCoord + (pixelSize * bOff)).b;\n\n  fragColor.rgb = vec3(r, g, b);\n\n vec2 uv = vTexCoord;\n  uv *= 1.0 - uv.xy;\n\n  float vig = uv.x * uv.y * 15.0;\n\n  vig = pow(vig, 0.02);\n\n  // fragColor.rgb *= vig;\n}"
+      "frag": "#version 300 es\n\nprecision mediump float;\n\nuniform sampler2D uMainTex;\nuniform sampler2D uDepthTex;\nuniform vec2 uTexSize;\nuniform float uNear;\nuniform float uFar;\n\n\nin vec2 vTexCoord;\nout vec4 fragColor;\n\n\nvoid main() {\n  vec2 rOff = vec2(0.0, 2.0);\n  vec2 gOff = vec2(0.0, 0.0);\n  vec2 bOff = vec2(2.0, 0.0);\n  vec2 pixelSize = 1.0 / uTexSize;\n  vec4 col = texture(uMainTex, vTexCoord);\n\n  fragColor = col;\n  float r = texture(uMainTex, vTexCoord + (pixelSize * rOff)).r;\n  float g = texture(uMainTex, vTexCoord + (pixelSize * gOff)).g;\n  float b = texture(uMainTex, vTexCoord + (pixelSize * bOff)).b;\n\n  fragColor.rgb = vec3(r, g, b);\n\n  // vec2 uv = vTexCoord;\n  // uv *= 1.0 - uv.xy;\n\n  // float vig = uv.x * uv.y * 15.0;\n\n  // vig = pow(vig, 0.03);\n\n  // fragColor.rgb *= vig;\n}"
     },
     "post-outline": {
       "frag": "#version 300 es\n\nprecision mediump float;\n\nuniform sampler2D uMainTex;\nuniform sampler2D uDepthTex;\nuniform vec2 uTexSize;\nuniform float uNear;\nuniform float uFar;\n\nin vec2 vTexCoord;\nout vec4 fragColor;\n\nfloat linearDepth(float d, float near, float far) {\n  float z = d * 2.0 - 1.0;\n  return (2.0 * near * far) / (far + near - d * (far - near)) / far;\n}\n\nvec4 gradient(sampler2D tex, vec2 coord) {\n  vec2 offset = vec2(1.0, 1.0) / uTexSize;\n\n  vec4 xSum = vec4(0.0);\n  vec4 ySum = vec4(0.0);\n\n  xSum += texture(tex, coord + vec2(-offset.x, 0.0)) * -1.0;\n  xSum += texture(tex, coord + vec2(+offset.x, 0.0));\n\n  ySum += texture(tex, coord + vec2(0.0, -offset.y)) * -1.0;\n  ySum += texture(tex, coord + vec2(0.0, +offset.y));\n\n  return sqrt(xSum * xSum + ySum * ySum);\n}\n\nvoid main() {\n  vec4 col = texture(uMainTex, vTexCoord);\n  float depth = texture(uDepthTex, vTexCoord).r;\n  float lDepth = linearDepth(depth, uNear, uFar);\n\n  vec4 colGrad = gradient(uMainTex, vTexCoord);\n  vec4 depthGrad = gradient(uDepthTex, vTexCoord);\n\n  float idQ = mix(colGrad.r, 0.0, smoothstep(0.0, 0.3, lDepth));\n\n  float idEdge = step(0.0001, colGrad.x);\n\n  float depthQ = mix(0.0, 100.0, smoothstep(0.0, 0.01, col.g));\n\n  float depthEdge = step(0.01, depthGrad.r);\n\n  float normEdge = step(0.3, colGrad.g);\n\n  float edge = max(idEdge, depthEdge);\n\n  vec3 grad = vec3(idEdge, depthEdge, 0.0);\n\n  float fog = smoothstep(4.0, 40.0, lDepth * (uFar - uNear));\n\n  // float surfaceId = round(col.r * 20.0);\n  fragColor.rgb = mix(vec3(0.2, 0.2, 0.2), vec3(0.6, 0.5, 0.5), 1.0 - fog);\n  // fragColor.rgb *= 1.0 - ((1.0 - fog) * edge);\n  // fragColor.a = 1.0;\n\n  fragColor = vec4(vec3(edge * 0.4 + 0.1), 1.0);\n\n  // fragColor = vec4(1.0, 0.0, 0.0, 1.0);\n\n  // fragColor = vec4(mix(vec3(1.0, 1.0, 0.2), vec3(0.1, 0.1, 0.1), edge), 1.0);\n\n  // fragColor = vec4(1.0, 0.0, 0.0, 1.0);\n  // fragColor = vec4(vec3(idEdge), 1.0);\n  // fragColor = vec4(colGrad.ggg, 1.0);\n  // fragColor = vec4(1.0, 0.0, 1.0, 1.0);\n  // fragColor = vec4(vec3(fog), 1.0);\n\n}"
@@ -1431,9 +1431,9 @@ var gum = (function (exports) {
 
 
   /**
-   * Make a cube shape.
+   * Make a cube. Centered on the origin with w, h, d of size.
    * @param {number} size The size of the cube.
-   * @return {object} A vertex attribute array.
+   * @return {Mesh}
    */ 
   function cube (size = 1) {
     const s = size / 2;
@@ -1490,11 +1490,11 @@ var gum = (function (exports) {
 
 
   /**
-   * Make a icosphere shape.
-   * @param {number} size The radius of the sphere.
+   * Make an icosphere shape with diameter size.
+   * @param {number} size The diameter of the sphere.
    * @param {number} level The subdivision level to use.
    * @param {boolean} flat Whether to use flat shading. Default smooth (false).
-   * @return {object} A vertex attribute array.
+   * @return {Mesh}
    */ 
   function icosphere (size = 1, level = 1, flat = false) {
     
@@ -1523,7 +1523,7 @@ var gum = (function (exports) {
       [0, 3, 7],
       [0, 7, 11],
       [0, 11, 8],
-      [0, 8, 4], //*
+      [0, 8, 4],
       [0, 4, 3],
 
       [2, 1, 6],
@@ -1559,7 +1559,6 @@ var gum = (function (exports) {
     const foundMidPoints = {};
 
     /**
-     * 
      * @param {*} a 
      * @param {*} b 
      * @returns 
@@ -1627,11 +1626,9 @@ var gum = (function (exports) {
 
         faceBuffer.push([pointer, pointer + 1, pointer + 2]);
       }
-
       faces = faceBuffer;
 
     } else {
-      
       vertices = positions.map(pos => {
         return { position: pos.xyz, normal: pos.normalize().xyz };
       });
@@ -1642,9 +1639,9 @@ var gum = (function (exports) {
 
 
   /**
-   * Make a quad. Faces UP along y axis.
-   * @param {number} size The size of the quad.
-   * @return {object} A vertex attribute array.
+   * Make a quad facing up along y axis.
+   * @param {number} size The w and d of the quad.
+   * @return {Mesh}
    */ 
   function quad (size) {
     const s = size / 2;
@@ -1655,7 +1652,7 @@ var gum = (function (exports) {
       new Vec3(-s, 0, +s),
     ];
     
-    const faces = [[0, 2, 1,], [0, 3, 2]];
+    const faces = [[0, 3, 2, 1]];
     const vertices = positions.map(pos => {
       return { position: pos.xyz, normal: [0, 1, 0] };
     });
@@ -1664,14 +1661,107 @@ var gum = (function (exports) {
   }
 
 
+  /**
+   * Make a grid facing up along y axis.
+   * @param {number} size The size of the quad.
+   * @param {number} subdivisions The number of subdivisions.
+   * @return {Mesh}
+   */ 
+  function grid (size, subdivisions = 10, flat = false) {
+    const s = size / 2;
+    const step = size / (subdivisions + 1);
+
+    const positions = [];
+    const faces = [];
+
+    if (flat) {
+
+      // Flat normals case. Copy shared verts.
+      let vertIndex = 0;
+      for (let i = 0; i < subdivisions + 1; i++) {
+        const z = i * step;
+        for (let j = 0; j < subdivisions + 1; j++) {
+          const x = j * step;
+          positions.push([-s + x,        0, -s + z]);
+          positions.push([-s + x + step, 0, -s + z]);
+          positions.push([-s + x + step, 0, -s + z + step]);
+          positions.push([-s + x       , 0, -s + z + step]);
+          
+          faces.push([vertIndex, vertIndex + 3, vertIndex + 2, vertIndex + 1]);
+          vertIndex += 4;
+        }
+      }
+
+    } else {
+
+      // Smooth normals case. Reuse shared verts.
+      for (let i = 0; i < subdivisions + 2; i++) {
+        const z = i * step;
+        for (let j = 0; j < subdivisions + 2; j++) {
+          const x = j * step;
+          positions.push([-s + x, 0, -s + z]);
+
+          if (i < subdivisions + 1 && j < subdivisions + 1) {
+            const a = i * (subdivisions + 2) + j;
+            const b = a + 1;
+            const c = a + subdivisions + 2;
+            const d = c + 1;
+            faces.push([a, c, d, b]);
+          }
+        }
+      }
+    }
+
+    const vertices = positions.map(pos => {
+      return { position: pos, normal: [0, 1, 0] };
+    });
+
+    return new Mesh(vertices, faces, { name: 'grid' });
+  }
+
+
+  /**
+   * Make a circle with diameter size facing up along y axis.
+   * @param {number} size The size of the quad.
+   * @param {number} resolution The number of straight line segments to use.
+   * @return {Mesh}
+   */ 
+  function circle (size, resolution = 12, fill = 'ngon') {
+    const positions = [];
+    const faces = [];
+
+    if (fill === 'fan') {
+      positions.push([0, 0, 0]);
+    } else if (fill === 'ngon') {
+      faces[0] = [];
+    }
+
+    for (let i = 0; i < resolution; i++) {
+      const theta = -i * Math.PI * 2 / resolution;
+      const x = Math.cos(theta) * (size / 2);
+      const z = Math.sin(theta) * (size / 2);
+
+      positions.push([x, 0, z]);
+
+      if (fill === 'fan') {
+        const next = (i + 1) % (resolution);
+        faces.push([0, i + 1, next + 1]);
+      } else if (fill === 'ngon') {
+        faces[0].push(i);
+      }
+    }
+
+    const vertices = positions.map(pos => {
+      return { position: pos, normal: [0, 1, 0] };
+    });
+    return new Mesh(vertices, faces, { name: 'circle' });
+  }
 
 
   /**
    * Make a full screen quad for rendering post effects..
-   * @return {object} A vertex attribute array.
    */
   function _fsQuad() {
-
     const vertices = [
       [-1, -1, 0],
       [+1, -1, 0],
@@ -1693,9 +1783,7 @@ var gum = (function (exports) {
 
 
   /**
-   * Make a quad. Faces UP along y axis.
-   * @param {number} size The size of the quad.
-   * @return {object} A vertex attribute array.
+   * Make an axes gizmo.
    */ 
   function _axes () {
     const positions = [
@@ -1740,7 +1828,9 @@ var gum = (function (exports) {
     __proto__: null,
     _axes: _axes,
     _fsQuad: _fsQuad,
+    circle: circle,
     cube: cube,
+    grid: grid,
     icosphere: icosphere,
     quad: quad
   });
@@ -2242,7 +2332,11 @@ var gum = (function (exports) {
       this.parent = null;
       this.children = [];
       this._worldMatrix = create();
-      this.uniforms = {};
+      this.uniforms = {
+        uObjectId: this.id,
+        uModel: this._worldMatrix,
+        uTex: 'none',
+      };
     }
 
     get x ()  { return this.transform.position.x };
@@ -2359,15 +2453,7 @@ var gum = (function (exports) {
       }
 
       if (this.geometry) {
-        drawList.push({
-          name: this.name,
-          geometry: this.geometry,
-          uniforms: {
-            uModel: this._worldMatrix,
-            uObjectId: this.id,
-            uTex: this.texture || 'none',
-          }
-        });
+        drawList.push(this);
       }
 
       if (children) {
@@ -2381,6 +2467,10 @@ var gum = (function (exports) {
     traverse (fn) {
       fn(this);
       this.children.forEach(child => child.traverse(fn));
+    }
+
+    uniform (name, value) {
+      this.uniforms[name] = value;
     }
   }
 

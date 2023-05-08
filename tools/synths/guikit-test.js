@@ -3,7 +3,7 @@ import { CTRL } from './ctrl.js';
 const controls = document.createElement('div');
 controls.className = 'control-area'
 document.body.append(controls);
-controls.style.width = '200px'
+controls.style.width = '600px'
 controls.style.padding = '0.5em';
 
 const ctrl = new CTRL(controls);
@@ -34,7 +34,8 @@ const obj = {
     const theta = 2 * Math.PI * phase;
 
     return 0.5 * Math.sin(theta + depth * Math.sin(theta * mod));
-  }
+  },
+  buffer: new Array(12).fill(0),
 };
 
 
@@ -45,14 +46,11 @@ ctrl.append(btn);
 const drg = ctrl.drag(obj, 'gain');
 ctrl.append(drg);
 
-const slide = ctrl.slider(obj, 'silde');
+const slide = ctrl.slider(obj, 'slide');
 ctrl.append(slide);
 
-const slide2 = ctrl.slider2(obj, 'slide2', {direction: 'vertical', width: 20, height: 100});
-ctrl.append(slide2);
-
-const slide3 = ctrl.slider2(obj, 'slide3', {direction: 'horizontal', width: 100, height: 20});
-ctrl.append(slide3);
+const axis = ctrl.axis(obj, 'slide2', {direction: 'vertical', width: 20, height: 60, notchCount: 2});
+ctrl.append(axis);
 
 const dial = ctrl.dial(obj, 'crunch');
 ctrl.append(dial);
@@ -72,12 +70,14 @@ const buff = new Array(res).fill(0).map((_, i) => {
 const plot = ctrl.plot(obj, buff, {width: 140, strokeWidth: 4});
 ctrl.append(plot);
 
-
 const toggle = ctrl.toggle(obj, 'bro');
 ctrl.append(toggle);
 
-const bools = ctrl.boolArray(obj, 'boolArr', 4);
+const bools = ctrl.boolArray(obj, 'boolArr', 8);
 bools.forEach(x => ctrl.append(x));
+
+const doodle = ctrl.doodle(obj, obj.buffer);
+ctrl.append(doodle);
 
 
 

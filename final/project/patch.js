@@ -12,7 +12,7 @@ export class Patch extends Oscillator {
     this._modulator = new Oscillator(ctx, 'sine', { freq: 0 });
 
     this._baseFrequency = new Signal(ctx, options.freq || 440);
-    this._modRatio = new Signal(ctx, 2.03);
+    this._modRatio = new Signal(ctx, 2);
 
 
     this._baseFrequency.connect(this._oscillator.frequency);
@@ -45,7 +45,9 @@ export class Patch extends Oscillator {
       this.frequency.setTargetAtTime(freq, 0, 0.001);
 
       this.gain.setValueCurveAtTime(this._modCurve, this.ctx.currentTime, this._noteLength);
-      // this._modulator.gain.setValueCurveAtTime(this._modCurve, this.ctx.currentTime, this._noteLength / 2);
+      this._modulator.gain.setValueAtTime(800, this.ctx.currentTime);
+      this._modulator.gain.setTargetAtTime(400, this.ctx.currentTime, this._noteLength / 2);
+
       this._nextTrigger = this.ctx.currentTime + this._noteLength;
     }
 

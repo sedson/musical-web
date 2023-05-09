@@ -114,8 +114,8 @@ const dac = ctx.createGain({ gain: 0 });
 
 const GLOBAL = {
   gain: 0.3,
-  verb: 0,
-  dist: 0,
+  verb: 0.1,
+  dist: 0.1,
 };
 
 
@@ -142,7 +142,6 @@ globalCtrl.append(
 );
 
 globalCtrl.onChange = () => {
-  console.log(reverb)
   reverb.mix.setTargetAtTime(GLOBAL.verb, 0, 0.1);
   dist.mix.setTargetAtTime(GLOBAL.dist, 0, 0.1);
   vol.gain.setTargetAtTime(GLOBAL.gain, 0, 0.1);
@@ -206,8 +205,8 @@ noiseCtrl.append(
 
 noiseCtrl.onChange = function () {
   resume();
-  noiseSource.gain.setTargetAtTime(NOISE.gain * 0.01, 0, 0.1);
-  noiseDrone.gain.setTargetAtTime(NOISE.gain * 0.1, 0, 0.1);
+  noiseSource.gain.setTargetAtTime(NOISE.gain * 0.03, 0, 0.1);
+  noiseDrone.gain.setTargetAtTime(NOISE.gain * 0.5, 0, 0.1);
 
   randSource.gain.setTargetAtTime(lerp(0, -50, NOISE.rate), 0, 0.1);
   randSource.speed.setTargetAtTime(lerp(0.0, 4, NOISE.rate), 0, 0.1);
@@ -268,7 +267,7 @@ const getClosest = (i, boolArray) => {
 const getPitch = (ref, octave) => {
   const closest = getClosest(ref, PLUCKS.scale);
   if (closest !== null) {
-    const m = closest + octave * PLUCKS.scale.length;
+    const m = closest + (octave * PLUCKS.scale.length);
     return 220 * Math.pow(2, (m) / PLUCKS.scale.length);
   }
   return 0;
@@ -299,14 +298,14 @@ PLUCKS.spawn = () => {
   particle.timeScale = Math.random() * 0.5 + 0.5;
   const type = Math.random(); 
 
-  if (type < 0.2) {
+  if (type < 0.3) {
     particle.scale(2)
     particle.timeScale *= 0.5;
     particle.octave = -1;
-  } else if (type < 0.4) {
+  } else if (type < 0.6) {
     particle.timeScale *= 1.5;
     particle.scale(0.5);
-    particle.octave = 1;
+    particle.octave = 2;
   }
 
   particle.time = Math.PI;
@@ -373,7 +372,7 @@ pluckCtrl.append(
 pluckCtrl.onChange = () => {
   resume();
   for (const voice of voices) {
-    voice._noteLength = lerp(0.1, 2, PLUCKS.noteLength);
+    voice._noteLength = lerp(0.2, 3, PLUCKS.noteLength);
   }
   timeStep = lerp(0.5, 10, PLUCKS.speed);
   PLUCKS.modBuffer[0] = 0;

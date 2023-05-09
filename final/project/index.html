@@ -13,7 +13,7 @@
     <p class="title">FIELD</p>
   </div>
   <div class="pluck-controls">
-    <p class="title">PLUCK</p>
+    <p class="title">PEBBLES</p>
   </div>
   <div class="global-controls">
     <p class="title">OUT</p>
@@ -155,7 +155,7 @@
         discard;
       }
 
-      float amt = smoothstep(0.0, 0.2, vWorldPos.y);
+      float amt = smoothstep(0.0, 0.3, vWorldPos.y);
 
       vec3 color = mix(vec3(0.5, 0.0, 0.5), vec3(1.0, 0.4, 1.0), amt);
 
@@ -164,7 +164,7 @@
 
       amt += steepness * 0.0;
       amt *= uNoise;
-      fragColor = vec4(mix(vec3(vColor), vec3(1.0, 0.8, 1.0), amt), 1.0);
+      fragColor = vec4(mix(vec3(vColor), vec3(1.0, 0.6, 1.0), amt), 1.0);
       fragColor.rgb = mix(fragColor.rgb, vec3(1.0, 1.0, 1.0), uGlow);
     }
   </script>
